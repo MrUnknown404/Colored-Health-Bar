@@ -10,7 +10,6 @@ import mrunknown404.colorhealthbar.util.Utils.Colors;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.Gui;
 import net.minecraft.client.renderer.GlStateManager;
-import net.minecraft.entity.SharedMonsterAttributes;
 import net.minecraft.entity.player.EntityPlayer;
 import net.minecraft.init.MobEffects;
 import net.minecraftforge.client.GuiIngameForge;
@@ -23,55 +22,14 @@ public class HealthOverlay {
 	private double lastPlayerHealth = 0;
 	
 	public void renderBar(EntityPlayer player, int width, int height) {
-		int updateCounter = mc.ingameGUI.getUpdateCounter();
-		
-		double health = player.getHealth();
-		boolean highlight = healthUpdateCounter > (long) updateCounter && (healthUpdateCounter - (long) updateCounter) / 3 % 2 == 1;
-		
-		if (health < playerHealth && player.hurtResistantTime > 0) {
-			healthUpdateCounter = (long) (updateCounter + 20);
-			lastPlayerHealth = playerHealth;
-		} else if (health > playerHealth && player.hurtResistantTime > 0) {
-			healthUpdateCounter = (long) (updateCounter + 20);
-			lastPlayerHealth = playerHealth;
-		}
-		playerHealth = health;
-		double displayHealth = health + (lastPlayerHealth - health) * ((double) player.hurtResistantTime / player.maxHurtResistantTime);
-		
 		int xStart = width / 2 - 91;
 		int yStart = height - GuiIngameForge.left_height;
-		double maxHealth = player.getEntityAttribute(SharedMonsterAttributes.MAX_HEALTH).getAttributeValue();
 		
 		mc.mcProfiler.startSection("health");
 		GlStateManager.pushMatrix();
 		GlStateManager.enableBlend();
-		int p1 = 16;
 		
-		if (player.isPotionActive(MobEffects.POISON)) {
-			p1 += 36;
-		} else if (player.isPotionActive(MobEffects.WITHER)) {
-			p1 += 72;
-		}
-		
-		int i4 = (highlight) ? 18 : 0;
-		
-		Utils.drawTexturedModalRect(xStart, yStart, 0, i4, 81, 9);
-		int alpha = health <= 0 ? 1 : health / maxHealth <= 0.2 && true ? (int) (Minecraft.getSystemTime() / 250) % 2 : 1;
-		
-		if (displayHealth != health) {
-			GlStateManager.color(1, 1, 1, alpha);
-			if (displayHealth > health) {
-				Utils.drawTexturedModalRect(xStart + 1, yStart + 1, 1, 10, Utils.getWidth(displayHealth, maxHealth), 7);
-			}
-		}
-		
-		Utils.getColor(health, maxHealth, p1).color2Gla(alpha);
-		Utils.drawTexturedModalRect(xStart + 1, yStart + 1, 1, 10, Utils.getWidth(health, maxHealth), 7);
-		
-		if (p1== 52) {
-			GlStateManager.color(0, .5f, 0, .5f);
-			Utils.drawTexturedModalRect(xStart + 1, yStart + 1, 1, 36, Utils.getWidth(health, maxHealth), 7);
-		}
+		renderBar(player, xStart, yStart, width, height);
 		
 		mc.mcProfiler.endStartSection("armor");
 		redrawArmor(width, height);
@@ -79,20 +37,12 @@ public class HealthOverlay {
 		mc.mcProfiler.endStartSection("health");
 		if (player.getAbsorptionAmount() > 0) {
 			Minecraft.getMinecraft().getTextureManager().bindTexture(Utils.ICON_BAR);
-			
-			GlStateManager.color(1, 1, 1);
 			Utils.drawTexturedModalRect(xStart, yStart - 10, 0, 0, 81, 9);
 			
-			if (p1 == 16) {
-				Utils.hex2Color(Colors.ABSORPTION_COLOR).color2Gl();
-			} else if (p1 == 52) {
-				Utils.hex2Color(Colors.ABSORPTION_POISON_COLOR).color2Gl();
-			} else if (p1 == 88) {
-				Utils.hex2Color(Colors.ABSORPTION_WITHER_COLOR).color2Gl();
-			}
+			absorptionToColorGl(player, true);
 			
-			if (player.getAbsorptionAmount() <= maxHealth) {
-				Utils.drawTexturedModalRect(xStart + 1, yStart + 1 - 10, 1, 10, Utils.getWidth(player.getAbsorptionAmount(), maxHealth), 7);
+			if (player.getAbsorptionAmount() <= player.getMaxHealth()) {
+				Utils.drawTexturedModalRect(xStart + 1, yStart + 1 - 10, 1, 10, Utils.getWidth(player.getAbsorptionAmount(), player.getMaxHealth()), 7);
 			} else {
 				Utils.drawTexturedModalRect(xStart + 1, yStart + 1 - 10, 1, 10, 79, 7);
 			}
@@ -102,6 +52,55 @@ public class HealthOverlay {
 		GlStateManager.disableBlend();
 		GlStateManager.popMatrix();
 		mc.mcProfiler.endSection();
+	}
+	
+	private void renderBar(EntityPlayer player, int xStart, int yStart, int width, int height) {
+		int updateCounter = mc.ingameGUI.getUpdateCounter();
+		
+		double health = player.getHealth(), displayHealth = health;
+		boolean highlight = healthUpdateCounter > (long) updateCounter && (healthUpdateCounter - (long) updateCounter) / 3 % 2 == 1;
+		
+		if (health < playerHealth && player.hurtResistantTime > 0) {
+			healthUpdateCounter = (long) (updateCounter + 20);
+			lastPlayerHealth = playerHealth;
+		} else if (health > playerHealth && player.hurtResistantTime > 0) {
+			healthUpdateCounter = (long) (updateCounter + 20);
+			lastPlayerHealth = playerHealth;
+		}
+		
+		playerHealth = health;
+		
+		boolean isRegen = false;
+		if (lastPlayerHealth > health) {
+			displayHealth = health + (lastPlayerHealth - health) * ((double) player.hurtResistantTime / player.maxHurtResistantTime);
+		} else if (lastPlayerHealth < health) {
+			isRegen = true;
+			displayHealth = health - lastPlayerHealth;
+		}
+		
+		Utils.drawTexturedModalRect(xStart, yStart, 0, (highlight) ? 18 : 0, 81, 9);
+		int alpha = health <= 0 ? 1 : health / player.getMaxHealth() <= 0.2 && true ? (int) (Minecraft.getSystemTime() / 250) % 2 : 1;
+		
+		if (displayHealth != health) {
+			GlStateManager.color(1, 1, 1, alpha);
+			if (displayHealth > health) {
+				Utils.drawTexturedModalRect(xStart + 1, yStart + 1, 1, 10, Utils.getWidth(displayHealth, player.getMaxHealth()), 7);
+			} else {
+				if (highlight) {
+					Utils.drawTexturedModalRect(xStart + 1, yStart + 1, 1, 10, Utils.getWidth(health, player.getMaxHealth()), 7);
+					healthToColorGl(player, true, true);
+					Utils.drawTexturedModalRect(xStart + 1, yStart + 1, 1, 10, Utils.getWidth(health - displayHealth, player.getMaxHealth()), 7);
+				} else {
+					healthToColorGl(player, true, true);
+					Utils.drawTexturedModalRect(xStart + 1, yStart + 1, 1, 10, Utils.getWidth(health, player.getMaxHealth()), 7);
+				}
+			}
+		}
+		
+		if (!isRegen) {
+			healthToColorGl(player, true, true);
+			Utils.drawTexturedModalRect(xStart + 1, yStart + 1, 1, 10, Utils.getWidth(health, player.getMaxHealth()), 7);
+		}
 	}
 	
 	private void redrawArmor(int width, int height) {
@@ -133,47 +132,27 @@ public class HealthOverlay {
 	}
 	
 	public void renderText(EntityPlayer player, int width, int height) {
-		double health = player.getHealth();
-		
 		int xStart = width / 2 - 91;
 		int yStart = height - GuiIngameForge.left_height;
-		double maxHealth = player.getEntityAttribute(SharedMonsterAttributes.MAX_HEALTH).getAttributeValue();
-		
-		int k5 = 16;
-		
-		if (player.isPotionActive(MobEffects.POISON)) {
-			k5 += 36;
-		} else if (player.isPotionActive(MobEffects.WITHER)) {
-			k5 += 72;
-		}
 		
 		String h;
 		if (ModConfig.roundTo != 0) {
 			String oo = StringUtils.repeat("0", ModConfig.roundTo);
 			
 			DecimalFormat df = new DecimalFormat("#0." + oo);
-			h = df.format(health) + "/" + df.format(maxHealth);
+			h = df.format(player.getHealth()) + "/" + df.format(player.getMaxHealth());
 		} else {
-			h = (int) Math.floor(health) + "/" + (int) Math.floor(maxHealth);
+			h = (int) Math.floor(player.getHealth()) + "/" + (int) Math.floor(player.getMaxHealth());
 		}
 		
-		Utils.drawStringOnHUD(h, xStart - 9 - Utils.getStringLength(h) - 5, yStart - 1,
-				Utils.getColor(Utils.roundTo(health, ModConfig.roundTo), Utils.roundTo(maxHealth, ModConfig.roundTo), k5).colorToText());
+		int color = healthToColorGl(player, true, true);
+		Utils.drawStringOnHUD(h, xStart - 9 - Utils.getStringLength(h) - 5, yStart - 1, color);
 		
 		float absorb = player.getAbsorptionAmount();
 		if (absorb > 0) {
-			int a1 = Utils.getStringLength((int) absorb + "");
-			int c = 0;
+			color = absorptionToColorGl(player, true);
 			
-			if (k5 == 16) {
-				c = Utils.hex2Color(Colors.ABSORPTION_COLOR).colorToText();
-			} else if (k5 == 52) {
-				c = Utils.hex2Color(Colors.ABSORPTION_POISON_COLOR).colorToText();
-			} else if (k5 == 88) {
-				c = Utils.hex2Color(Colors.ABSORPTION_WITHER_COLOR).colorToText();
-			}
-			
-			Utils.drawStringOnHUD("" + (int) absorb, xStart - a1 - 9 - 5, yStart - 11, c);
+			Utils.drawStringOnHUD("" + (int) absorb, xStart - Utils.getStringLength((int) absorb + "") - 9 - 5, yStart - 11, color);
 		}
 	}
 	
@@ -187,21 +166,100 @@ public class HealthOverlay {
 			p2 += 36;
 		}
 		
-		int xStart = width / 2 - 91;
-		int yStart = height - GuiIngameForge.left_height;
-		GlStateManager.color(1, 1, 1);
+		int xStart = width / 2 - 91, yStart = height - GuiIngameForge.left_height;
+		int hMod = Utils.getHeartMulti(player.getMaxHealth());
 		
-		int hMod = Utils.getHeartMulti(player.getEntityAttribute(SharedMonsterAttributes.MAX_HEALTH).getAttributeValue());
+		healthToColorGl(player, false, false);
+		
+		if (ModConfig.useCustomColor) {
+			hMod = Utils.Colors.HEARTS.length - 1;
+		}
 		
 		mc.getTextureManager().bindTexture(Gui.ICONS);
 		Utils.drawTexturedModalRect(xStart - 10, yStart, 16, 0, 9, 9);
 		mc.getTextureManager().bindTexture(Utils.HEARTS);
-		Utils.drawTexturedModalRect(xStart - 10, yStart, 9 * hMod + p1, p1 + (player.world.getWorldInfo().isHardcoreModeEnabled() ? 27 : 0), 9, 9);
+		Utils.drawTexturedModalRect(xStart - 10, yStart, 9 * hMod, p1 + (player.world.getWorldInfo().isHardcoreModeEnabled() ? 27 : 0), 9, 9);
 		
 		if (player.getAbsorptionAmount() > 0) {
+			absorptionToColorGl(player, ModConfig.useCustomColor);
+			if (ModConfig.useCustomColor) {
+				hMod = Utils.Colors.HEARTS.length - 1;
+			}
+			
 			mc.getTextureManager().bindTexture(Gui.ICONS);
 			Utils.drawTexturedModalRect(xStart - 10, yStart - 10, 16, 0, 9, 9);
-			Utils.drawTexturedModalRect(xStart - 10, yStart - 10, 160 - p2, player.world.getWorldInfo().isHardcoreModeEnabled() ? 45 : 0, 9, 9);
+			if (ModConfig.useCustomColor) {
+				mc.getTextureManager().bindTexture(Utils.HEARTS);
+				Utils.drawTexturedModalRect(xStart - 10, yStart - 10, 9 * hMod, p1 + (player.world.getWorldInfo().isHardcoreModeEnabled() ? 27 : 0), 9, 9);
+			} else {
+				mc.getTextureManager().bindTexture(Gui.ICONS);
+				Utils.drawTexturedModalRect(xStart - 10, yStart - 10, 160 - p2, player.world.getWorldInfo().isHardcoreModeEnabled() ? 45 : 0, 9, 9);
+			}
+		}
+		
+		GlStateManager.color(1, 1, 1);
+	}
+	
+	private int healthToColorGl(EntityPlayer pl, boolean isWhiteHeart, boolean isBlinkable) {
+		if (ModConfig.useCustomColor) {
+			if (pl.isPotionActive(MobEffects.POISON) && Utils.isValidHexColor(ModConfig.hexCustomHealthPoisonColor)) {
+				Utils.hex2Color(ModConfig.hexCustomHealthPoisonColor).color2Gla(1);
+				return Utils.hex2Color(ModConfig.hexCustomHealthPoisonColor).colorToText();
+			} else if (pl.isPotionActive(MobEffects.WITHER) && Utils.isValidHexColor(ModConfig.hexCustomHealthWitherColor)) {
+				Utils.hex2Color(ModConfig.hexCustomHealthWitherColor).color2Gla(1);
+				return Utils.hex2Color(ModConfig.hexCustomHealthWitherColor).colorToText();
+			} else if (Utils.isValidHexColor(ModConfig.hexCustomHealthColor)) {
+				Utils.hex2Color(ModConfig.hexCustomHealthColor).color2Gla(1);
+				return Utils.hex2Color(ModConfig.hexCustomHealthColor).colorToText();
+			} else {
+				Utils.hex2Color("#000000").color2Gla(1);
+				return Utils.hex2Color("#000000").colorToText();
+			}
+		} else {
+			int p1 = pl.isPotionActive(MobEffects.POISON) ? 52 : pl.isPotionActive(MobEffects.WITHER) ? 88 : 16;
+			float alpha = pl.getHealth() <= 0 ? 1 : pl.getHealth() / pl.getMaxHealth() <= 0.2 && true ? (int) (Minecraft.getSystemTime() / 250) % 2 : 1;
+			if (isBlinkable) {
+				Utils.getColor(pl.getHealth(), pl.getMaxHealth(), p1).color2Gla(alpha);
+			}
+			if (!isWhiteHeart) {
+				GlStateManager.color(1, 1, 1);
+			}
+			
+			return Utils.getColor(Utils.roundTo(pl.getHealth(), ModConfig.roundTo), Utils.roundTo(pl.getMaxHealth(), ModConfig.roundTo), p1).colorToText();
+		}
+	}
+	
+	private int absorptionToColorGl(EntityPlayer pl, boolean isWhiteHeart) {
+		if (ModConfig.useCustomColor) {
+			if (pl.isPotionActive(MobEffects.POISON) && Utils.isValidHexColor(ModConfig.hexCustomAbsorptionPoisonColor)) {
+				Utils.hex2Color(ModConfig.hexCustomAbsorptionPoisonColor).color2Gla(1);
+				return Utils.hex2Color(ModConfig.hexCustomAbsorptionPoisonColor).colorToText();
+			} else if (pl.isPotionActive(MobEffects.WITHER) && Utils.isValidHexColor(ModConfig.hexCustomAbsorptionWitherColor)) {
+				Utils.hex2Color(ModConfig.hexCustomAbsorptionWitherColor).color2Gla(1);
+				return Utils.hex2Color(ModConfig.hexCustomAbsorptionWitherColor).colorToText();
+			} else if (Utils.isValidHexColor(ModConfig.hexCustomAbsorptionColor)) {
+				Utils.hex2Color(ModConfig.hexCustomAbsorptionColor).color2Gla(1);
+				return Utils.hex2Color(ModConfig.hexCustomAbsorptionColor).colorToText();
+			} else {
+				GlStateManager.color(0, 0, 0);
+				return Utils.hex2Color("#000000").colorToText();
+			}
+		} else {
+			if (pl.isPotionActive(MobEffects.POISON)) {
+				Utils.hex2Color(Colors.ABSORPTION_POISON_COLOR).color2Gl();
+				return Utils.hex2Color(Colors.ABSORPTION_POISON_COLOR).colorToText();
+			} else if (pl.isPotionActive(MobEffects.WITHER)) {
+				Utils.hex2Color(Colors.ABSORPTION_WITHER_COLOR).color2Gl();
+				return Utils.hex2Color(Colors.ABSORPTION_WITHER_COLOR).colorToText();
+			} else {
+				if (isWhiteHeart) {
+					Utils.hex2Color(Colors.ABSORPTION_COLOR).color2Gl();
+					return Utils.hex2Color(Colors.ABSORPTION_COLOR).colorToText();
+				} else {
+					GlStateManager.color(1, 1, 1);
+					return Utils.hex2Color("#ffffff").colorToText();
+				}
+			}
 		}
 	}
 }

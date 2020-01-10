@@ -75,7 +75,7 @@ public class Utils {
 	public static int getHeartMulti(double health) {
 		if (health <= 20) {
 			return 0;
-		} else if (health>= Colors.HEARTS[Colors.HEARTS.length - 1]) {
+		} else if (health >= Colors.HEARTS[Colors.HEARTS.length - 1]) {
 			return Colors.HEARTS.length - 1;
 		}
 		
@@ -95,5 +95,23 @@ public class Utils {
 				"#80c619", "#9ee536" };
 		public final static String[] WITHERED_COLORS = new String[] { "#555555", "#474747", "#434343", "#3e3e3e", "#4e4e4e", "#898989", "#898989", "#898989", "#898989", "#484848",
 				"#9d9d9d", "#adadad" };
+	}
+	
+	public static boolean isValidHexColor(String hexColor) {
+		if (!hexColor.startsWith("#")) {
+			return false;
+		}
+		
+		hexColor = hexColor.substring(1);
+		
+		if (hexColor.length() == 0 || (hexColor.charAt(0) != '-' && Character.digit(hexColor.charAt(0), 16) == -1))
+			return false;
+		if (hexColor.length() == 1 && hexColor.charAt(0) == '-')
+			return false;
+		
+		for (int i = 1; i < hexColor.length(); i++)
+			if (Character.digit(hexColor.charAt(i), 16) == -1)
+				return false;
+		return true;
 	}
 }
