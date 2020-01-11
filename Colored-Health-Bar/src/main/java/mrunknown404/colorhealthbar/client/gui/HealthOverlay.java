@@ -73,7 +73,7 @@ public class HealthOverlay {
 		boolean isRegen = false;
 		if (lastPlayerHealth > health) {
 			displayHealth = health + (lastPlayerHealth - health) * ((double) player.hurtResistantTime / player.maxHurtResistantTime);
-		} else if (lastPlayerHealth < health) {
+		} else if (lastPlayerHealth != 0 && lastPlayerHealth < health) {
 			isRegen = true;
 			displayHealth = health - lastPlayerHealth;
 		}

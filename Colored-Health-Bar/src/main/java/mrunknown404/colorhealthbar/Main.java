@@ -14,6 +14,8 @@ import net.minecraftforge.fml.common.Mod.Instance;
 import net.minecraftforge.fml.common.event.FMLPostInitializationEvent;
 import net.minecraftforge.fml.common.eventhandler.EventBus;
 import net.minecraftforge.fml.common.eventhandler.IEventListener;
+import net.minecraftforge.fml.relauncher.Side;
+import net.minecraftforge.fml.relauncher.SideOnly;
 
 @Mod(modid = Main.MOD_ID, useMetadata = true)
 public class Main {
@@ -26,6 +28,7 @@ public class Main {
 	
 	@SuppressWarnings("unchecked")
 	@EventHandler
+	@SideOnly(Side.CLIENT)
 	public void postInit(FMLPostInitializationEvent e) {
 		MinecraftForge.EVENT_BUS.register(new RenderEventHandler());
 		healthBar = new HealthOverlay();

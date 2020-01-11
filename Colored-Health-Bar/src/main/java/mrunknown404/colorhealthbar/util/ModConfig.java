@@ -8,7 +8,7 @@ import net.minecraftforge.fml.common.Mod.EventBusSubscriber;
 import net.minecraftforge.fml.common.eventhandler.SubscribeEvent;
 
 @Config(modid = Main.MOD_ID)
-@Config.LangKey("colorhealthbar.config.title")
+@Config.LangKey(Main.MOD_ID + ".config.title")
 public class ModConfig {
 	
 	@Config.Comment("Health decimal to round to")
