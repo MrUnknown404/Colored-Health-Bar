@@ -219,13 +219,13 @@ public class HealthOverlay {
 			int p1 = pl.isPotionActive(MobEffects.POISON) ? 52 : pl.isPotionActive(MobEffects.WITHER) ? 88 : 16;
 			float alpha = pl.getHealth() <= 0 ? 1 : pl.getHealth() / pl.getMaxHealth() <= 0.2 && true ? (int) (Minecraft.getSystemTime() / 250) % 2 : 1;
 			if (isBlinkable) {
-				Utils.getColor(pl.getHealth(), pl.getMaxHealth(), p1).color2Gla(alpha);
+				Utils.getColor(pl.getMaxHealth(), p1).color2Gla(alpha);
 			}
 			if (!isWhiteHeart) {
 				GlStateManager.color(1, 1, 1);
 			}
 			
-			return Utils.getColor(Utils.roundTo(pl.getHealth(), ModConfig.roundTo), Utils.roundTo(pl.getMaxHealth(), ModConfig.roundTo), p1).colorToText();
+			return Utils.getColor(Utils.roundTo(pl.getMaxHealth(), ModConfig.roundTo), p1).colorToText();
 		}
 	}
 	

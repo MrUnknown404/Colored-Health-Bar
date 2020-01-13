@@ -52,7 +52,7 @@ public class Utils {
 		return new RGBColor(r, g, b);
 	}
 	
-	public static RGBColor getColor(double d1, double d2, int effect) {
+	public static RGBColor getColor(double d2, int effect) {
 		String[] colorCodes = null;
 		
 		if (effect == 16) {
@@ -63,19 +63,13 @@ public class Utils {
 			colorCodes = Colors.WITHERED_COLORS;
 		}
 		
-		if (d2 <= 20) {
-			return hex2Color(colorCodes[0]);
-		} else if (d2 >= Colors.HEARTS[Colors.HEARTS.length - 1]) {
-			return hex2Color(colorCodes[Colors.HEARTS.length - 1]);
-		}
-		
-		return hex2Color(colorCodes[(int) Math.ceil(d2 / 20) - 1]);
+		return hex2Color(colorCodes[getHeartMulti(d2)]);
 	}
 	
 	public static int getHeartMulti(double health) {
 		if (health <= 20) {
 			return 0;
-		} else if (health >= Colors.HEARTS[Colors.HEARTS.length - 1]) {
+		} else if (health >= Colors.HEARTS[Colors.HEARTS.length - 2]) {
 			return Colors.HEARTS.length - 1;
 		}
 		
@@ -91,8 +85,8 @@ public class Utils {
 		
 		public final static String[] NORMAL_COLORS = new String[] { "#ff0000", "#ee8100", "#e5ce00", "#00da00", "#0c9df1", "#b486ff", "#ec8afb", "#fb8bad", "#fbd78b", "#03efec",
 				"#b7e7fd", "#ededed" };
-		public final static String[] POISONED_COLORS = new String[] { "#00ff00", "#619613", "#86cf1a", "#6aa514", "#5a8c11", "#68a114", "#72b116", "#70ad16", "#94e221", "#cyan",
-				"#80c619", "#9ee536" };
+		public final static String[] POISONED_COLORS = new String[] { "#00ff00", "#619613", "#86cf1a", "#6aa514", "#5a8c11", "#68a114", "#72b116", "#70ad16", "#94e221", "#80c619",
+				"#96e326", "#9ee536" };
 		public final static String[] WITHERED_COLORS = new String[] { "#555555", "#474747", "#434343", "#3e3e3e", "#4e4e4e", "#898989", "#898989", "#898989", "#898989", "#484848",
 				"#9d9d9d", "#adadad" };
 	}
@@ -104,14 +98,19 @@ public class Utils {
 		
 		hexColor = hexColor.substring(1);
 		
-		if (hexColor.length() == 0 || (hexColor.charAt(0) != '-' && Character.digit(hexColor.charAt(0), 16) == -1))
+		if (hexColor.length() == 0 || (hexColor.charAt(0) != '-' && Character.digit(hexColor.charAt(0), 16) == -1)) {
 			return false;
-		if (hexColor.length() == 1 && hexColor.charAt(0) == '-')
+		}
+		if (hexColor.length() == 1 && hexColor.charAt(0) == '-') {
 			return false;
+		}
 		
-		for (int i = 1; i < hexColor.length(); i++)
-			if (Character.digit(hexColor.charAt(i), 16) == -1)
+		for (int i = 1; i < hexColor.length(); i++) {
+			if (Character.digit(hexColor.charAt(i), 16) == -1) {
 				return false;
+			}
+		}
+		
 		return true;
 	}
 }
