@@ -6,7 +6,8 @@ import org.apache.commons.lang3.StringUtils;
 
 import mrunknown404.colorhealthbar.util.ModConfig;
 import mrunknown404.colorhealthbar.util.Utils;
-import mrunknown404.colorhealthbar.util.Utils.Colors;
+import mrunknown404.unknownlibs.utils.ColorUtils;
+import mrunknown404.unknownlibs.utils.MathUtils;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.Gui;
 import net.minecraft.client.renderer.GlStateManager;
@@ -172,24 +173,24 @@ public class HealthOverlay {
 		healthToColorGl(player, false, false);
 		
 		if (ModConfig.useCustomColor) {
-			hMod = Utils.Colors.HEARTS.length - 1;
+			hMod = Utils.HEARTS.length - 1;
 		}
 		
 		mc.getTextureManager().bindTexture(Gui.ICONS);
 		Utils.drawTexturedModalRect(xStart - 10, yStart, 16, 0, 9, 9);
-		mc.getTextureManager().bindTexture(Utils.HEARTS);
+		mc.getTextureManager().bindTexture(Utils.ICON_HEARTS);
 		Utils.drawTexturedModalRect(xStart - 10, yStart, 9 * hMod, p1 + (player.world.getWorldInfo().isHardcoreModeEnabled() ? 27 : 0), 9, 9);
 		
 		if (player.getAbsorptionAmount() > 0) {
 			absorptionToColorGl(player, ModConfig.useCustomColor);
 			if (ModConfig.useCustomColor) {
-				hMod = Utils.Colors.HEARTS.length - 1;
+				hMod = Utils.HEARTS.length - 1;
 			}
 			
 			mc.getTextureManager().bindTexture(Gui.ICONS);
 			Utils.drawTexturedModalRect(xStart - 10, yStart - 10, 16, 0, 9, 9);
 			if (ModConfig.useCustomColor) {
-				mc.getTextureManager().bindTexture(Utils.HEARTS);
+				mc.getTextureManager().bindTexture(Utils.ICON_HEARTS);
 				Utils.drawTexturedModalRect(xStart - 10, yStart - 10, 9 * hMod, p1 + (player.world.getWorldInfo().isHardcoreModeEnabled() ? 27 : 0), 9, 9);
 			} else {
 				mc.getTextureManager().bindTexture(Gui.ICONS);
@@ -202,62 +203,62 @@ public class HealthOverlay {
 	
 	private int healthToColorGl(EntityPlayer pl, boolean isWhiteHeart, boolean isBlinkable) {
 		if (ModConfig.useCustomColor) {
-			if (pl.isPotionActive(MobEffects.POISON) && Utils.isValidHexColor(ModConfig.hexCustomHealthPoisonColor)) {
-				Utils.hex2Color(ModConfig.hexCustomHealthPoisonColor).color2Gla(1);
-				return Utils.hex2Color(ModConfig.hexCustomHealthPoisonColor).colorToText();
-			} else if (pl.isPotionActive(MobEffects.WITHER) && Utils.isValidHexColor(ModConfig.hexCustomHealthWitherColor)) {
-				Utils.hex2Color(ModConfig.hexCustomHealthWitherColor).color2Gla(1);
-				return Utils.hex2Color(ModConfig.hexCustomHealthWitherColor).colorToText();
-			} else if (Utils.isValidHexColor(ModConfig.hexCustomHealthColor)) {
-				Utils.hex2Color(ModConfig.hexCustomHealthColor).color2Gla(1);
-				return Utils.hex2Color(ModConfig.hexCustomHealthColor).colorToText();
+			if (pl.isPotionActive(MobEffects.POISON) && ColorUtils.isValidHexColor(ModConfig.hexCustomHealthPoisonColor)) {
+				Utils.color2Gl(ColorUtils.hex2Color(ModConfig.hexCustomHealthPoisonColor), 1);
+				return Utils.colorToText(ColorUtils.hex2Color(ModConfig.hexCustomHealthPoisonColor));
+			} else if (pl.isPotionActive(MobEffects.WITHER) && ColorUtils.isValidHexColor(ModConfig.hexCustomHealthWitherColor)) {
+				Utils.color2Gl(ColorUtils.hex2Color(ModConfig.hexCustomHealthWitherColor), 1);
+				return Utils.colorToText(ColorUtils.hex2Color(ModConfig.hexCustomHealthWitherColor));
+			} else if (ColorUtils.isValidHexColor(ModConfig.hexCustomHealthColor)) {
+				Utils.color2Gl(ColorUtils.hex2Color(ModConfig.hexCustomHealthColor), 1);
+				return Utils.colorToText(ColorUtils.hex2Color(ModConfig.hexCustomHealthColor));
 			} else {
-				Utils.hex2Color("#000000").color2Gla(1);
-				return Utils.hex2Color("#000000").colorToText();
+				Utils.color2Gl(ColorUtils.hex2Color("#000000"), 1);
+				return Utils.colorToText(ColorUtils.hex2Color("#000000"));
 			}
 		} else {
 			int p1 = pl.isPotionActive(MobEffects.POISON) ? 52 : pl.isPotionActive(MobEffects.WITHER) ? 88 : 16;
 			float alpha = pl.getHealth() <= 0 ? 1 : pl.getHealth() / pl.getMaxHealth() <= 0.2 && true ? (int) (Minecraft.getSystemTime() / 250) % 2 : 1;
 			if (isBlinkable) {
-				Utils.getColor(pl.getMaxHealth(), p1).color2Gla(alpha);
+				Utils.color2Gl(Utils.getColor(pl.getMaxHealth(), p1), alpha);
 			}
 			if (!isWhiteHeart) {
 				GlStateManager.color(1, 1, 1);
 			}
 			
-			return Utils.getColor(Utils.roundTo(pl.getMaxHealth(), ModConfig.roundTo), p1).colorToText();
+			return Utils.colorToText(Utils.getColor(MathUtils.roundTo(pl.getMaxHealth(), ModConfig.roundTo), p1));
 		}
 	}
 	
 	private int absorptionToColorGl(EntityPlayer pl, boolean isWhiteHeart) {
 		if (ModConfig.useCustomColor) {
-			if (pl.isPotionActive(MobEffects.POISON) && Utils.isValidHexColor(ModConfig.hexCustomAbsorptionPoisonColor)) {
-				Utils.hex2Color(ModConfig.hexCustomAbsorptionPoisonColor).color2Gla(1);
-				return Utils.hex2Color(ModConfig.hexCustomAbsorptionPoisonColor).colorToText();
-			} else if (pl.isPotionActive(MobEffects.WITHER) && Utils.isValidHexColor(ModConfig.hexCustomAbsorptionWitherColor)) {
-				Utils.hex2Color(ModConfig.hexCustomAbsorptionWitherColor).color2Gla(1);
-				return Utils.hex2Color(ModConfig.hexCustomAbsorptionWitherColor).colorToText();
-			} else if (Utils.isValidHexColor(ModConfig.hexCustomAbsorptionColor)) {
-				Utils.hex2Color(ModConfig.hexCustomAbsorptionColor).color2Gla(1);
-				return Utils.hex2Color(ModConfig.hexCustomAbsorptionColor).colorToText();
+			if (pl.isPotionActive(MobEffects.POISON) && ColorUtils.isValidHexColor(ModConfig.hexCustomAbsorptionPoisonColor)) {
+				Utils.color2Gl(ColorUtils.hex2Color(ModConfig.hexCustomAbsorptionPoisonColor), 1);
+				return Utils.colorToText(ColorUtils.hex2Color(ModConfig.hexCustomAbsorptionPoisonColor));
+			} else if (pl.isPotionActive(MobEffects.WITHER) && ColorUtils.isValidHexColor(ModConfig.hexCustomAbsorptionWitherColor)) {
+				Utils.color2Gl(ColorUtils.hex2Color(ModConfig.hexCustomAbsorptionWitherColor), 1);
+				return Utils.colorToText(ColorUtils.hex2Color(ModConfig.hexCustomAbsorptionWitherColor));
+			} else if (ColorUtils.isValidHexColor(ModConfig.hexCustomAbsorptionColor)) {
+				Utils.color2Gl(ColorUtils.hex2Color(ModConfig.hexCustomAbsorptionColor), 1);
+				return Utils.colorToText(ColorUtils.hex2Color(ModConfig.hexCustomAbsorptionColor));
 			} else {
 				GlStateManager.color(0, 0, 0);
-				return Utils.hex2Color("#000000").colorToText();
+				return Utils.colorToText(ColorUtils.hex2Color("#000000"));
 			}
 		} else {
 			if (pl.isPotionActive(MobEffects.POISON)) {
-				Utils.hex2Color(Colors.ABSORPTION_POISON_COLOR).color2Gl();
-				return Utils.hex2Color(Colors.ABSORPTION_POISON_COLOR).colorToText();
+				Utils.color2Gl(ColorUtils.hex2Color(Utils.ABSORPTION_POISON_COLOR));
+				return Utils.colorToText(ColorUtils.hex2Color(Utils.ABSORPTION_POISON_COLOR));
 			} else if (pl.isPotionActive(MobEffects.WITHER)) {
-				Utils.hex2Color(Colors.ABSORPTION_WITHER_COLOR).color2Gl();
-				return Utils.hex2Color(Colors.ABSORPTION_WITHER_COLOR).colorToText();
+				Utils.color2Gl(ColorUtils.hex2Color(Utils.ABSORPTION_WITHER_COLOR));
+				return Utils.colorToText(ColorUtils.hex2Color(Utils.ABSORPTION_WITHER_COLOR));
 			} else {
 				if (isWhiteHeart) {
-					Utils.hex2Color(Colors.ABSORPTION_COLOR).color2Gl();
-					return Utils.hex2Color(Colors.ABSORPTION_COLOR).colorToText();
+					Utils.color2Gl(ColorUtils.hex2Color(Utils.ABSORPTION_COLOR));
+					return Utils.colorToText(ColorUtils.hex2Color(Utils.ABSORPTION_COLOR));
 				} else {
 					GlStateManager.color(1, 1, 1);
-					return Utils.hex2Color("#ffffff").colorToText();
+					return Utils.colorToText(ColorUtils.hex2Color("#ffffff"));
 				}
 			}
 		}

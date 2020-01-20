@@ -14,10 +14,8 @@ import net.minecraftforge.fml.common.Mod.Instance;
 import net.minecraftforge.fml.common.event.FMLPostInitializationEvent;
 import net.minecraftforge.fml.common.eventhandler.EventBus;
 import net.minecraftforge.fml.common.eventhandler.IEventListener;
-import net.minecraftforge.fml.relauncher.Side;
-import net.minecraftforge.fml.relauncher.SideOnly;
 
-@Mod(modid = Main.MOD_ID, useMetadata = true)
+@Mod(modid = Main.MOD_ID, clientSideOnly = true, useMetadata = true, dependencies = "required-after:unknownlibs@1.0.0")
 public class Main {
 	public static final String MOD_ID = "colorhealthbar";
 	
@@ -28,7 +26,6 @@ public class Main {
 	
 	@SuppressWarnings("unchecked")
 	@EventHandler
-	@SideOnly(Side.CLIENT)
 	public void postInit(FMLPostInitializationEvent e) {
 		MinecraftForge.EVENT_BUS.register(new RenderEventHandler());
 		healthBar = new HealthOverlay();
