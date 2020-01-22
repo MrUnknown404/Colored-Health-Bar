@@ -36,7 +36,7 @@ public class RenderEventHandler {
 		
 		Minecraft.getMinecraft().getTextureManager().bindTexture(Utils.ICON_BAR);
 		
-		Main.main.healthBar.renderBar(player, e.getResolution().getScaledWidth(), e.getResolution().getScaledHeight());
+		Main.main.healthBar.renderAll(player, e.getResolution().getScaledWidth(), e.getResolution().getScaledHeight());
 		GuiIngameForge.left_height += 10;
 		
 		GuiIngameForge.left_height = initial_left_height;

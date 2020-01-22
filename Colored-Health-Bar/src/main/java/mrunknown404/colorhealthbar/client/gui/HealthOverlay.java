@@ -22,7 +22,7 @@ public class HealthOverlay {
 	private long healthUpdateCounter = 0;
 	private double lastPlayerHealth = 0;
 	
-	public void renderBar(EntityPlayer player, int width, int height) {
+	public void renderAll(EntityPlayer player, int width, int height) {
 		int xStart = width / 2 - 91;
 		int yStart = height - GuiIngameForge.left_height;
 		
@@ -30,7 +30,7 @@ public class HealthOverlay {
 		GlStateManager.pushMatrix();
 		GlStateManager.enableBlend();
 		
-		renderBar(player, xStart, yStart, width, height);
+		renderBar(player, xStart, yStart);
 		
 		mc.mcProfiler.endStartSection("armor");
 		redrawArmor(width, height);
@@ -55,17 +55,17 @@ public class HealthOverlay {
 		mc.mcProfiler.endSection();
 	}
 	
-	private void renderBar(EntityPlayer player, int xStart, int yStart, int width, int height) {
+	private void renderBar(EntityPlayer player, int xStart, int yStart) {
 		int updateCounter = mc.ingameGUI.getUpdateCounter();
 		
 		double health = player.getHealth(), displayHealth = health;
-		boolean highlight = healthUpdateCounter > (long) updateCounter && (healthUpdateCounter - (long) updateCounter) / 3 % 2 == 1;
+		boolean highlight = healthUpdateCounter > updateCounter && (healthUpdateCounter - updateCounter) / 3 % 2 == 1;
 		
 		if (health < playerHealth && player.hurtResistantTime > 0) {
-			healthUpdateCounter = (long) (updateCounter + 20);
+			healthUpdateCounter = updateCounter + 20;
 			lastPlayerHealth = playerHealth;
 		} else if (health > playerHealth && player.hurtResistantTime > 0) {
-			healthUpdateCounter = (long) (updateCounter + 20);
+			healthUpdateCounter = updateCounter + 20;
 			lastPlayerHealth = playerHealth;
 		}
 		
@@ -216,18 +216,18 @@ public class HealthOverlay {
 				Utils.color2Gl(ColorUtils.hex2Color("#000000"), 1);
 				return Utils.colorToText(ColorUtils.hex2Color("#000000"));
 			}
-		} else {
-			int p1 = pl.isPotionActive(MobEffects.POISON) ? 52 : pl.isPotionActive(MobEffects.WITHER) ? 88 : 16;
-			float alpha = pl.getHealth() <= 0 ? 1 : pl.getHealth() / pl.getMaxHealth() <= 0.2 && true ? (int) (Minecraft.getSystemTime() / 250) % 2 : 1;
-			if (isBlinkable) {
-				Utils.color2Gl(Utils.getColor(pl.getMaxHealth(), p1), alpha);
-			}
-			if (!isWhiteHeart) {
-				GlStateManager.color(1, 1, 1);
-			}
-			
-			return Utils.colorToText(Utils.getColor(MathUtils.roundTo(pl.getMaxHealth(), ModConfig.roundTo), p1));
 		}
+		
+		int p1 = pl.isPotionActive(MobEffects.POISON) ? 52 : pl.isPotionActive(MobEffects.WITHER) ? 88 : 16;
+		float alpha = pl.getHealth() <= 0 ? 1 : pl.getHealth() / pl.getMaxHealth() <= 0.2 && true ? (int) (Minecraft.getSystemTime() / 250) % 2 : 1;
+		if (isBlinkable) {
+			Utils.color2Gl(Utils.getColor(pl.getMaxHealth(), p1), alpha);
+		}
+		if (!isWhiteHeart) {
+			GlStateManager.color(1, 1, 1);
+		}
+		
+		return Utils.colorToText(Utils.getColor(MathUtils.roundTo(pl.getMaxHealth(), ModConfig.roundTo), p1));
 	}
 	
 	private int absorptionToColorGl(EntityPlayer pl, boolean isWhiteHeart) {
@@ -245,22 +245,21 @@ public class HealthOverlay {
 				GlStateManager.color(0, 0, 0);
 				return Utils.colorToText(ColorUtils.hex2Color("#000000"));
 			}
+		}
+		
+		if (pl.isPotionActive(MobEffects.POISON)) {
+			Utils.color2Gl(ColorUtils.hex2Color(Utils.ABSORPTION_POISON_COLOR));
+			return Utils.colorToText(ColorUtils.hex2Color(Utils.ABSORPTION_POISON_COLOR));
+		} else if (pl.isPotionActive(MobEffects.WITHER)) {
+			Utils.color2Gl(ColorUtils.hex2Color(Utils.ABSORPTION_WITHER_COLOR));
+			return Utils.colorToText(ColorUtils.hex2Color(Utils.ABSORPTION_WITHER_COLOR));
 		} else {
-			if (pl.isPotionActive(MobEffects.POISON)) {
-				Utils.color2Gl(ColorUtils.hex2Color(Utils.ABSORPTION_POISON_COLOR));
-				return Utils.colorToText(ColorUtils.hex2Color(Utils.ABSORPTION_POISON_COLOR));
-			} else if (pl.isPotionActive(MobEffects.WITHER)) {
-				Utils.color2Gl(ColorUtils.hex2Color(Utils.ABSORPTION_WITHER_COLOR));
-				return Utils.colorToText(ColorUtils.hex2Color(Utils.ABSORPTION_WITHER_COLOR));
-			} else {
-				if (isWhiteHeart) {
-					Utils.color2Gl(ColorUtils.hex2Color(Utils.ABSORPTION_COLOR));
-					return Utils.colorToText(ColorUtils.hex2Color(Utils.ABSORPTION_COLOR));
-				} else {
-					GlStateManager.color(1, 1, 1);
-					return Utils.colorToText(ColorUtils.hex2Color("#ffffff"));
-				}
+			if (isWhiteHeart) {
+				Utils.color2Gl(ColorUtils.hex2Color(Utils.ABSORPTION_COLOR));
+				return Utils.colorToText(ColorUtils.hex2Color(Utils.ABSORPTION_COLOR));
 			}
+			GlStateManager.color(1, 1, 1);
+			return Utils.colorToText(ColorUtils.hex2Color("#ffffff"));
 		}
 	}
 }
