@@ -18,9 +18,9 @@ import net.minecraftforge.client.GuiIngameForge;
 public class HealthOverlay {
 	private final Minecraft mc = Minecraft.getMinecraft();
 	
-	private double playerHealth = 0;
-	private long healthUpdateCounter = 0;
-	private double lastPlayerHealth = 0;
+	private double playerHealth, playerAbsorption, lastPlayerHealth, lastPlayerAbsorption;
+	private long healthUpdateCounter, absorptionUpdateCounter;
+	private boolean isRegen = false;
 	
 	public void renderAll(EntityPlayer player, int width, int height) {
 		int xStart = width / 2 - 91;
@@ -30,23 +30,14 @@ public class HealthOverlay {
 		GlStateManager.pushMatrix();
 		GlStateManager.enableBlend();
 		
-		renderBar(player, xStart, yStart);
+		renderBar(true, player, xStart, yStart);
 		
 		mc.mcProfiler.endStartSection("armor");
-		redrawArmor(width, height);
+		redrawArmor(player, width, height);
 		
 		mc.mcProfiler.endStartSection("health");
 		if (player.getAbsorptionAmount() > 0) {
-			Minecraft.getMinecraft().getTextureManager().bindTexture(Utils.ICON_BAR);
-			Utils.drawTexturedModalRect(xStart, yStart - 10, 0, 0, 81, 9);
-			
-			absorptionToColorGl(player, true);
-			
-			if (player.getAbsorptionAmount() <= player.getMaxHealth()) {
-				Utils.drawTexturedModalRect(xStart + 1, yStart + 1 - 10, 1, 10, Utils.getWidth(player.getAbsorptionAmount(), player.getMaxHealth()), 7);
-			} else {
-				Utils.drawTexturedModalRect(xStart + 1, yStart + 1 - 10, 1, 10, 79, 7);
-			}
+			renderBar(false, player, xStart, yStart);
 		}
 		
 		GlStateManager.color(1, 1, 1);
@@ -55,79 +46,116 @@ public class HealthOverlay {
 		mc.mcProfiler.endSection();
 	}
 	
-	private void renderBar(EntityPlayer player, int xStart, int yStart) {
-		int updateCounter = mc.ingameGUI.getUpdateCounter();
+	private void renderBar(boolean isHealth, EntityPlayer player, int xStart, int yStart) {
+		long updateCounter = mc.ingameGUI.getUpdateCounter();
 		
-		double health = player.getHealth(), displayHealth = health;
-		boolean highlight = healthUpdateCounter > updateCounter && (healthUpdateCounter - updateCounter) / 3 % 2 == 1;
-		
-		if (health < playerHealth && player.hurtResistantTime > 0) {
+		if (player.getHealth() < playerHealth && player.hurtResistantTime > 0) {
 			healthUpdateCounter = updateCounter + 20;
 			lastPlayerHealth = playerHealth;
-		} else if (health > playerHealth && player.hurtResistantTime > 0) {
+		} else if (player.getHealth() > playerHealth && player.hurtResistantTime > 0) {
 			healthUpdateCounter = updateCounter + 20;
 			lastPlayerHealth = playerHealth;
 		}
 		
-		playerHealth = health;
+		playerHealth = player.getHealth();
 		
-		boolean isRegen = false;
-		if (lastPlayerHealth > health) {
-			displayHealth = health + (lastPlayerHealth - health) * ((double) player.hurtResistantTime / player.maxHurtResistantTime);
-		} else if (lastPlayerHealth != 0 && lastPlayerHealth < health) {
+		if (lastPlayerHealth > player.getHealth()) {
+			isRegen = false;
+		} else if (lastPlayerHealth != 0 && lastPlayerHealth < player.getHealth()) {
 			isRegen = true;
-			displayHealth = health - lastPlayerHealth;
 		}
 		
-		Utils.drawTexturedModalRect(xStart, yStart, 0, (highlight) ? 18 : 0, 81, 9);
-		int alpha = health <= 0 ? 1 : health / player.getMaxHealth() <= 0.2 && true ? (int) (Minecraft.getSystemTime() / 250) % 2 : 1;
+		double value, displayValue;
+		boolean highlight;
+		if (isHealth) {
+			value = player.getHealth();
+			displayValue = value;
+			
+			highlight = healthUpdateCounter > updateCounter && (healthUpdateCounter - updateCounter) / 3 % 2 == 1;
+			
+			if (lastPlayerHealth > value) {
+				displayValue = value + (lastPlayerHealth - value) * ((double) player.hurtResistantTime / player.maxHurtResistantTime);
+			} else if (lastPlayerHealth != 0 && lastPlayerHealth < value) {
+				displayValue = value - lastPlayerHealth;
+			}
+		} else {
+			value = player.getAbsorptionAmount();
+			displayValue = value;
+			
+			highlight = absorptionUpdateCounter > updateCounter && (absorptionUpdateCounter - updateCounter) / 3 % 2 == 1;
+			if (!isRegen) {
+				lastPlayerHealth = playerHealth;
+			}
+			
+			if (value < playerAbsorption && player.hurtResistantTime > 0) {
+				absorptionUpdateCounter = updateCounter + 20;
+				lastPlayerAbsorption = playerAbsorption;
+			} else if (value > playerAbsorption && player.hurtResistantTime > 0) {
+				absorptionUpdateCounter = updateCounter + 20;
+				lastPlayerAbsorption = playerAbsorption;
+			}
+			
+			playerAbsorption = value;
+			
+			if (lastPlayerAbsorption > value) {
+				displayValue = value + (lastPlayerAbsorption - value) * ((double) player.hurtResistantTime / player.maxHurtResistantTime);
+			} else if (lastPlayerAbsorption != 0 && lastPlayerAbsorption < value) {
+				displayValue = value - lastPlayerAbsorption;
+			}
+		}
 		
-		if (displayHealth != health) {
-			GlStateManager.color(1, 1, 1, alpha);
-			if (displayHealth > health) {
-				Utils.drawTexturedModalRect(xStart + 1, yStart + 1, 1, 10, Utils.getWidth(displayHealth, player.getMaxHealth()), 7);
+		int ymod = !isHealth ? 10 : 0;
+		
+		GlStateManager.color(1, 1, 1);
+		Utils.drawTexturedModalRect(xStart, yStart - ymod, 0, (highlight) ? 9 : 0, 81, 9);
+		
+		if (displayValue != value) {
+			if (displayValue > value) {
+				GlStateManager.color(1, 1, 1);
+				Utils.drawTexturedModalRect(xStart + 2, yStart + 2 - ymod, 0, 18, Utils.getWidth(displayValue, player.getMaxHealth()), 5);
 			} else {
 				if (highlight) {
-					Utils.drawTexturedModalRect(xStart + 1, yStart + 1, 1, 10, Utils.getWidth(health, player.getMaxHealth()), 7);
-					healthToColorGl(player, true, true);
-					Utils.drawTexturedModalRect(xStart + 1, yStart + 1, 1, 10, Utils.getWidth(health - displayHealth, player.getMaxHealth()), 7);
+					Utils.drawTexturedModalRect(xStart + 2, yStart + 2 - ymod, 0, 18, Utils.getWidth(value, player.getMaxHealth()), 5);
+					colorBarGl(player, true, true, isHealth);
+					Utils.drawTexturedModalRect(xStart + 2, yStart + 2 - ymod, 0, 18, Utils.getWidth(value - displayValue, player.getMaxHealth()), 5);
 				} else {
-					healthToColorGl(player, true, true);
-					Utils.drawTexturedModalRect(xStart + 1, yStart + 1, 1, 10, Utils.getWidth(health, player.getMaxHealth()), 7);
+					colorBarGl(player, true, true, isHealth);
+					Utils.drawTexturedModalRect(xStart + 2, yStart + 2 - ymod, 0, 18, Utils.getWidth(value, player.getMaxHealth()), 5);
 				}
 			}
 		}
 		
-		if (!isRegen) {
-			healthToColorGl(player, true, true);
-			Utils.drawTexturedModalRect(xStart + 1, yStart + 1, 1, 10, Utils.getWidth(health, player.getMaxHealth()), 7);
+		if (!isRegen || !isHealth) {
+			colorBarGl(player, true, true, isHealth);
+			Utils.drawTexturedModalRect(xStart + 2, yStart + 2 - ymod, 0, 18, Utils.getWidth(value, player.getMaxHealth()), 5);
+			GlStateManager.color(1, 1, 1);
 		}
 	}
 	
-	private void redrawArmor(int width, int height) {
-		if (!(mc.getRenderViewEntity() instanceof EntityPlayer)) {
-			return;
-		}
-		GlStateManager.color(1, 1, 1);
-		mc.getTextureManager().bindTexture(Gui.ICONS);
-		
-		EntityPlayer player = (EntityPlayer) this.mc.getRenderViewEntity();
-		int left = width / 2;
-		left -= 91;
-		int top = height - 49 - (player.getAbsorptionAmount() > 0 ? 10 : 0);
-		
+	private void redrawArmor(EntityPlayer player, int width, int height) {
 		if (player.getTotalArmorValue() <= 0) {
 			return;
 		}
 		
-		for (int i = 0; i < 10; i++) {
-			int threshold = i * 2 + 1;
-			if (threshold < player.getTotalArmorValue()) {
-				Utils.drawTexturedModalRect(left + i * 8, top, 34, 9, 9, 9);
-			} else if (threshold == player.getTotalArmorValue()) {
-				Utils.drawTexturedModalRect(left + i * 8, top, 25, 9, 9, 9);
-			} else {
-				Utils.drawTexturedModalRect(left + i * 8, top, 16, 9, 9, 9);
+		GlStateManager.color(1, 1, 1);
+		mc.getTextureManager().bindTexture(Gui.ICONS);
+		
+		int left = (width / 2) - 91, top = height - 49 - (player.getAbsorptionAmount() > 0 ? 10 : 0);
+		
+		if (player.getTotalArmorValue() < 20) {
+			for (int i = player.getTotalArmorValue() + player.getTotalArmorValue() / 20; i < 20 + player.getTotalArmorValue() / 20; i++) {
+				if (i % 2 == 0) {
+					Utils.drawTexturedModalRect(left + (i / 2) * 8, top, 16, 9, 9, 9);
+				}
+			}
+		}
+		
+		for (int i = 1; i < Math.min(player.getTotalArmorValue(), (ModConfig.maxArmorRows * 20)) + 1; i++) {
+			int ymod = ((i - 1) / 2 / 10) * 10;
+			if (i % 2 == 0) {
+				Utils.drawTexturedModalRect(left + ((i - 1) / 2) * 8 - (ymod * 8), top - ymod, 34, 9, 9, 9);
+			} else if (i == player.getTotalArmorValue()) {
+				Utils.drawTexturedModalRect(left + ((i - 1) / 2) * 8 - (ymod * 8), top - ymod, 25, 9, 9, 9);
 			}
 		}
 	}
@@ -261,5 +289,9 @@ public class HealthOverlay {
 			GlStateManager.color(1, 1, 1);
 			return Utils.colorToText(ColorUtils.hex2Color("#ffffff"));
 		}
+	}
+	
+	private int colorBarGl(EntityPlayer pl, boolean isWhiteHeart, boolean isBlinkable, boolean isHeart) {
+		return isHeart ? healthToColorGl(pl, isWhiteHeart, isBlinkable) : absorptionToColorGl(pl, isWhiteHeart);
 	}
 }

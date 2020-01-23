@@ -31,6 +31,10 @@ public class ModConfig {
 	@Config.Comment("Custom wither color in hex (example '#1ebbc6')")
 	public static String hexCustomAbsorptionWitherColor = "#70590d";
 	
+	@Config.Comment("Maximum number of armor rows to render (Unless a mod removed the armor cap this will be stuck at 1.5 bars)")
+	@Config.RangeInt(min = 1, max = 10)
+	public static int maxArmorRows = 3;
+	
 	@EventBusSubscriber(modid = Main.MOD_ID)
 	private static class EventHandler {
 		@SubscribeEvent

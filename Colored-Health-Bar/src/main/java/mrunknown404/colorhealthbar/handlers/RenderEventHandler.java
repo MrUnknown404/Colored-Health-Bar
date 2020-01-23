@@ -6,7 +6,6 @@ import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.Gui;
 import net.minecraft.entity.Entity;
 import net.minecraft.entity.player.EntityPlayer;
-import net.minecraftforge.client.GuiIngameForge;
 import net.minecraftforge.client.event.RenderGameOverlayEvent;
 import net.minecraftforge.client.event.RenderGameOverlayEvent.ElementType;
 import net.minecraftforge.fml.common.eventhandler.SubscribeEvent;
@@ -28,26 +27,15 @@ public class RenderEventHandler {
 			return;
 		}
 		EntityPlayer player = (EntityPlayer) entity;
-		if (player.capabilities.isCreativeMode || player.isSpectator()) {
+		if (player.isCreative() || player.isSpectator()) {
 			return;
 		}
-		
-		int initial_left_height = GuiIngameForge.left_height;
 		
 		Minecraft.getMinecraft().getTextureManager().bindTexture(Utils.ICON_BAR);
 		
 		Main.main.healthBar.renderAll(player, e.getResolution().getScaledWidth(), e.getResolution().getScaledHeight());
-		GuiIngameForge.left_height += 10;
-		
-		GuiIngameForge.left_height = initial_left_height;
-		
 		Main.main.healthBar.renderText(player, e.getResolution().getScaledWidth(), e.getResolution().getScaledHeight());
-		GuiIngameForge.left_height += 10;
-		
-		GuiIngameForge.left_height = initial_left_height;
-		
 		Main.main.healthBar.renderIcon(player, e.getResolution().getScaledWidth(), e.getResolution().getScaledHeight());
-		GuiIngameForge.left_height += 10;
 		
 		Minecraft.getMinecraft().getTextureManager().bindTexture(Gui.ICONS);
 	}

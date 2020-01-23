@@ -20,10 +20,10 @@ public class Utils {
 	
 	public static int getWidth(double d1, double d2) {
 		if (d1 >= d2) {
-			return 78;
+			return 77;
 		}
 		
-		int w = 78;
+		int w = 77;
 		double d3 = Math.max(w * d1 / d2, 0);
 		return (int) Math.ceil(d3);
 	}
