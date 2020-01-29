@@ -15,7 +15,7 @@ import net.minecraftforge.fml.common.event.FMLPostInitializationEvent;
 import net.minecraftforge.fml.common.eventhandler.EventBus;
 import net.minecraftforge.fml.common.eventhandler.IEventListener;
 
-@Mod(modid = Main.MOD_ID, clientSideOnly = true, useMetadata = true, dependencies = "required-after:unknownlibs@1.0.1")
+@Mod(modid = Main.MOD_ID, clientSideOnly = true, useMetadata = true, dependencies = "required-after:unknownlibs@[1.0.1,)")
 public class Main {
 	public static final String MOD_ID = "colorhealthbar";
 	
