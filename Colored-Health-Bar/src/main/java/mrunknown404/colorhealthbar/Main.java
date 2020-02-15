@@ -24,7 +24,6 @@ public class Main {
 	
 	public HealthOverlay healthBar;
 	
-	@SuppressWarnings("unchecked")
 	@EventHandler
 	public void postInit(FMLPostInitializationEvent e) {
 		MinecraftForge.EVENT_BUS.register(new RenderEventHandler());
