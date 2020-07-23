@@ -25,7 +25,7 @@ public class Main {
 	public HealthOverlay healthBar;
 	
 	@EventHandler
-	public void postInit(FMLPostInitializationEvent e) {
+	public void postInit(@SuppressWarnings("unused") FMLPostInitializationEvent e) {
 		MinecraftForge.EVENT_BUS.register(new RenderEventHandler());
 		healthBar = new HealthOverlay();
 		
